@@ -2,10 +2,11 @@ import 'dart:ui';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:ext_storage/ext_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_insta/flutter_insta.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -35,8 +36,7 @@ class _HomePageState extends State<HomePage> {
         savedDir.create();
       }
       try {
-        FlutterInsta flutterInsta = new FlutterInsta();
-        var s = await flutterInsta.downloadReels(videoUrl);
+        var s = await downloadReels(videoUrl);
         print(_localPath);
         await FlutterDownloader.enqueue(
                 url: s,
@@ -86,6 +86,18 @@ class _HomePageState extends State<HomePage> {
   fileName() {
     var uuid = Uuid().v1();
     return '${uuid}.mp4';
+  }
+
+  Future<String> downloadReels(String link) async {
+    var linkEdit = link.replaceAll(" ", "").split("/");
+    var downloadURL = await http.get(
+        '${linkEdit[0]}//${linkEdit[2]}/${linkEdit[3]}/${linkEdit[4]}' +
+            "/?__a=1");
+    var data = json.decode(downloadURL.body);
+    var graphql = data['graphql'];
+    var shortcodeMedia = graphql['shortcode_media'];
+    var videoUrl = shortcodeMedia['video_url'];
+    return videoUrl; // return download link
   }
 
   @override
